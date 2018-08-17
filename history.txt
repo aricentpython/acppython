@@ -1,0 +1,43 @@
+    1  cd C:\Users\sgowdex\Documents\PythonWorkSpace\Python_POC
+    2  cd C:\Users\sgowdex\Documents\PythonWorkSpace\Python_POC
+    3  cd /
+    4  pwd
+    5  pwd
+    6  cd C:
+    7  pwd
+    8  cd Users/sgowdex/Documents/PythonWorkSpace/Python_POC/
+    9  ls
+   10  dir
+   11  mkdir git_workspace
+   12  cd git_workspace/
+   13  git pull https://github.com/aricentpython/acppython.git
+   14  git help
+   15  git clone https://github.com/aricentpython/acppython.git
+   16  git clone https://github.com/aricentpython/acppython.git
+   17  git clone https://github.com/aricentpython/acppython.git
+   18  echo "Hello World!" >> Hello.tx
+   19  ls
+   20  rename Hello.tx Hello.txt
+   21  mv Hello.tx Hello.txt
+   22  ls
+   23  git init
+   24  git add .
+   25  git commit -m "First Commit"
+   26  git status
+   27  git show
+   28  git remote add origin https://github.com/aricentpython/acppython.git
+   29  git remote -v
+   30  git push origin master
+   31  git push origin master
+   32  git remote -v
+   33  git push origin master
+   34  git push origin master
+   35  git push origin master
+   36  git push -u origin master
+   37  git push -u origin master
+   38  git@github.com:aricentpython/acppython.git
+   39  git push https://aricentpython:python@2018@github.com:aricentpython/acppython.git
+   40  git push https://'aricentpython':'python@2018'@github.com/aricentpython/acppython.git
+   41  git push https://'aricentpython':'python\@2018'@github.com/aricentpython/acppython.git
+   42  git push https://'aricentpython':'python2018'@github.com/aricentpython/acppython.git
+   43  history > history.txt
