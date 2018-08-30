@@ -1,8 +1,9 @@
 import socket
 import sys
 import _thread
-import datetime
-
+from wsgiref.handlers import format_date_time
+from datetime import datetime
+from time import mktime
 
 def web_page(path):
     print("web_page::path: {}".format(path), '\n')
@@ -43,14 +44,16 @@ def prepare_response(response):
 
 
 def go_get_method(parsed_request_line, http_request):
-    # datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S %Z")
     # print("parsed_request_line: {}".format(parsed_request_line))
     # print("http_request: {}".format(http_request))
     response = {}
     print("go_get_method::parsed_request_line: {}".format(parsed_request_line), '\n')
     status_line = parsed_request_line['http_ver'] + ' '
     response['message-body'] = web_page(parsed_request_line)
-    response['general-header'] = 'Date: ' + datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S %Z")
+    # response['general-header'] = 'Date: ' + datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S %Z")
+    now = datetime.now()
+    stamp = mktime(now.timetuple())
+    response['general-header'] = 'Date: ' + format_date_time(stamp)
 
     if response['message-body'] != '':
         status_line = status_line + '200 OK'
