@@ -9,7 +9,8 @@ def web_page(path):
     print("web_page::path: {}".format(path), '\n')
     content = ''
     if path['uri'] == '/':
-        content = "Welcome to our Web Page"
+        # content = "Welcome to our Web Page"
+        content = '<h1>Welcome to our Web Page</h1>'
     return content
 
 
@@ -29,6 +30,7 @@ def prepare_response(response):
     response_string = ''
 
     print("prepare_response::response: {}".format(response), '\n')
+    response['general-header'] = response['general-header'] + '\r\nConnection: close' + '\r\nContent-Type: text/html'
 
     for item in response_format:
         if item in response:
@@ -43,22 +45,27 @@ def prepare_response(response):
     return response_string
 
 
+def prepare_datetime():
+    now = datetime.now()
+    stamp = mktime(now.timetuple())
+    return format_date_time(stamp)
+
+
 def go_get_method(parsed_request_line, http_request):
-    # print("parsed_request_line: {}".format(parsed_request_line))
-    # print("http_request: {}".format(http_request))
     response = {}
     print("go_get_method::parsed_request_line: {}".format(parsed_request_line), '\n')
     status_line = parsed_request_line['http_ver'] + ' '
     response['message-body'] = web_page(parsed_request_line)
     # response['general-header'] = 'Date: ' + datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S %Z")
-    now = datetime.now()
-    stamp = mktime(now.timetuple())
-    response['general-header'] = 'Date: ' + format_date_time(stamp)
+    response['general-header'] = 'Date: ' + prepare_datetime()
 
     if response['message-body'] != '':
         status_line = status_line + '200 OK'
     else:
         status_line = status_line + '404 NOT FOUND'
+        response['message-body'] = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; " \
+                                   "charset=utf-8\"></head><body><h2>Aricent Web Server</h2><div>404 - " \
+                                   "path NOT FOUND</div></body></html>"
     response['status-line'] = status_line
     return response
 
@@ -73,6 +80,19 @@ def go_put_method(http_request):
 
 def go_post_method(http_request):
     return
+
+
+def method_not_implemented(parsed_request_line):
+    response = {}
+    status_line = parsed_request_line['http_ver'] + " 501 Not Implemented"
+    response['message-body'] = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; " \
+                               "charset=utf-8\"></head><body><h2>Aricent Web Server</h2><div>501 - " \
+                               "Not Implemented</div></body></html>"
+    response['general-header'] = 'Date: ' + prepare_datetime()
+    response['general-header'] = response['general-header'] + '\r\nConnection: close' + '\r\nContent-Type: text/html'
+    response['status-line'] = status_line
+
+    return response
 
 
 def parse_received_data(data):
@@ -93,21 +113,25 @@ def parse_received_data(data):
     return http_request_dictionary
 
 
-def threaded_client(conne):
-    # conne.send(str.encode('Welcome.. Type your Info.\r\n'))
+def send_response(client_socket, prepared_response):
+    client_socket.sendall(prepared_response.encode(encoding='utf-8'))
+    client_socket.close()
+
+
+def threaded_client(client_socket):
+    # client_socket.send(str.encode('Welcome.. Type your Info.\r\n'))
 
     while True:
-        reply = ''
 
         try:
-            data = conne.recv(2048)
+            data = client_socket.recv(2048)
         except ConnectionResetError:
             print("*** Connection Closed ***")
-            conne.close()
+            client_socket.close()
             break
         except:
             print("*** Connection is Broken ***")
-            conne.close()
+            client_socket.close()
             break
 
         print("Data received from client: {}".format(data))
@@ -116,7 +140,6 @@ def threaded_client(conne):
         if b"\xff" not in data:
             http_req_parsed = parse_received_data(data)
             print("http_req_parsed: {}".format(http_req_parsed), '\n')
-            # request_line = str(http_req_parsed['request'])
             parsed_http_request_line = parse_request_line(http_req_parsed['request'])
             del http_req_parsed['request']
 
@@ -124,7 +147,6 @@ def threaded_client(conne):
             print("parsed_http_request_line: {}".format(parsed_http_request_line), '\n')
 
             if parsed_http_request_line['method'] == 'GET':
-                # Implement GET Method
                 response = go_get_method(parsed_http_request_line, http_req_parsed)
             # elif (request_line.split())[0] == 'HEAD':
             #     # Implement HEAD Method
@@ -135,33 +157,34 @@ def threaded_client(conne):
             # elif (request_line.split())[0] == 'POST':
             #     # Implement HEAD Method
             #     go_post_method(http_req_parsed)
+            else:
+                response = method_not_implemented(parsed_http_request_line)
 
             prepared_response = prepare_response(response)
             print("1. prepared_response: {}".format(prepared_response), '\n')
-
-            # reply = reply.encode(encoding='utf-8')
 
         if not data:
             print("\n**NO DATA PRESENT**\n")
             break
 
-        conne.sendall(prepared_response.encode(encoding='utf-8'))
-    conne.close()
+        send_response(client_socket, prepared_response)
 
 
+# main function start hear
 host = ''
 port = 5555
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
     sock.bind((host, port))
+    sock.listen(5)
 except socket.error as e:
     print(str(e))
 
-sock.listen(5)
+
 print("waiting for a connection...")
 
 while True:
-    conn, addr = sock.accept()
+    client_sock, addr = sock.accept()
     print("Connected to: {} : {}".format(addr[0], addr[1]))
-    _thread.start_new_thread(threaded_client, (conn, ))
+    _thread.start_new_thread(threaded_client, (client_sock, ))
