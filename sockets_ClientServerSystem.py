@@ -10,7 +10,10 @@ def web_page(path):
     content = ''
     if path['uri'] == '/':
         # content = "Welcome to our Web Page"
-        content = '<h1>Welcome to our Web Page</h1>'
+        # content = '<h1>Welcome to our Web Page</h1>'
+        content = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; " \
+                                   "charset=utf-8\"></head><body><h1>Aricent Web Server</h1>" \
+                                   "<h2>Welcome to our Web Page</h2></body></html>"
     return content
 
 
