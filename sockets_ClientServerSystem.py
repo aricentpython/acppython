@@ -5,6 +5,7 @@ from wsgiref.handlers import format_date_time
 from datetime import datetime
 from time import mktime
 
+
 def web_page(path):
     print("web_page::path: {}".format(path), '\n')
     content = ''
@@ -64,9 +65,12 @@ def go_get_method(parsed_request_line, http_request):
 
     if response['message-body'] != '':
         status_line = status_line + '200 OK'
+        if parsed_request_line['method'] == 'HEAD':
+            del response['message-body']
     else:
         status_line = status_line + '404 NOT FOUND'
-        response['message-body'] = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; " \
+        if parsed_request_line['method'] != 'HEAD':
+            response['message-body'] = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; " \
                                    "charset=utf-8\"></head><body><h2>Aricent Web Server</h2><div>404 - " \
                                    "path NOT FOUND</div></body></html>"
     response['status-line'] = status_line
@@ -140,6 +144,12 @@ def threaded_client(client_socket):
         print("Data received from client: {}".format(data))
         # formatted_data = parse_received_data(data)
 
+        if not data:
+            print("\n**NO DATA PRESENT**\n")
+            print("*** closing the Connection ***")
+            client_socket.close()
+            break
+
         if b"\xff" not in data:
             http_req_parsed = parse_received_data(data)
             print("http_req_parsed: {}".format(http_req_parsed), '\n')
@@ -151,9 +161,9 @@ def threaded_client(client_socket):
 
             if parsed_http_request_line['method'] == 'GET':
                 response = go_get_method(parsed_http_request_line, http_req_parsed)
-            # elif (request_line.split())[0] == 'HEAD':
-            #     # Implement HEAD Method
-            #     go_head_method(http_req_parsed)
+            elif parsed_http_request_line['method'] == 'HEAD':
+                # Implement HEAD Method
+                response = go_get_method(parsed_http_request_line, http_req_parsed)
             # elif (request_line.split())[0] == 'PUT':
             #     # Implement HEAD Method
             #     go_put_method(http_req_parsed)
@@ -165,10 +175,6 @@ def threaded_client(client_socket):
 
             prepared_response = prepare_response(response)
             print("1. prepared_response: {}".format(prepared_response), '\n')
-
-        if not data:
-            print("\n**NO DATA PRESENT**\n")
-            break
 
         send_response(client_socket, prepared_response)
 
