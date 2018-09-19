@@ -6,6 +6,7 @@ from datetime import datetime
 from time import mktime
 
 
+
 def web_page(path):
     print("web_page::path: {}".format(path), '\n')
     content = ''
